@@ -1,0 +1,3 @@
+/data/mengxf/Project/KML250721-tcr-RUN5/results/250721/automrd_qc_info.tsv
+/data/mengxf/Project/KML250804-tcr-RUN5-2/results/250804/automrd_qc_info.tsv
+/data/mengxf/Project/KML250811-tcr-RUN6/results/250812/automrd_qc_info.tsv
