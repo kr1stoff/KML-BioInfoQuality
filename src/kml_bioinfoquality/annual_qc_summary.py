@@ -8,21 +8,22 @@ logger = logging.getLogger(__name__)
 
 @click.command()
 @click.option('--input-file', required=True, help='输入特定项目QC结果文件的列表, 每行一条绝对路径')
-# todo 后面按需添加项目
 @click.option('--project-name', default='tcr', show_default=True, type=click.Choice(['tcr', 'lvis']), help='项目名称')
 @click.option('--output-file', required=True, help='输出年度QC统计结果的Excel文件')
 @click.help_option('--help', help='显示帮助信息')
 def main(input_file: str, project_name: str, output_file: str):
     """年度QC统计"""
-    logging.debug(f"输入文件: {input_file}")
     logging.debug(f"项目名称: {project_name}")
+    logging.debug(f"输入文件: {input_file}")
     logging.debug(f"输出文件: {output_file}")
     logging.info('开始统计年度QC')
+
     if project_name == 'tcr':
         base_name, q30_name = 'Total_bases', 'Q30'
     elif project_name == 'lvis':
         base_name, q30_name = 'RawBases', 'CleanQ30'
     qc_summary(input_file, output_file, base_name, q30_name)
+
     logging.info('年度QC统计完成')
 
 
