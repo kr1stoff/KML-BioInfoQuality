@@ -26,8 +26,7 @@ def main(input_file, project_name, output_dir):
     if project_name == 'tcr':
         tcr_comparison(input_file, output_dir)
     elif project_name == 'lvis':
-        # TODO 待开发慢病毒部分
-        pass
+        lvis_comparison(input_file, output_dir)
 
     logging.info('重分析结果比较完成')
 
@@ -48,7 +47,7 @@ def tcr_comparison(input_file: str, output_dir: Path):
     # 删除NTC和POS样本
     merged = merged[~merged['Sample'].str.contains('NTC|POS', case=False, na=False, regex=True)]
     merged['Diff'] = merged.apply(lambda row: row['ValueOld'] - row['ValueNew'], axis=1)
-    merged.to_excel(f'{output_dir}/data-quality.xlsx', index=False)
+    merged.to_excel(f'{output_dir}/tcr-data-quality.xlsx', index=False)
     # * 特定标志物
     res = list(Path(old_dir).glob('*/stats/trb.top10.tsv'))
     dfs = []
@@ -66,6 +65,44 @@ def tcr_comparison(input_file: str, output_dir: Path):
         dfs.append(merged)
     all_df = pd.concat(dfs, ignore_index=True)
     all_df.to_excel(f'{output_dir}/trb.xlsx', index=False)
+
+
+def lvis_comparison(input_file: str, output_dir: Path):
+    with open(input_file, 'r') as f:
+        old_dir, new_dir = f.readline().strip().split(',')
+    # * 数据质量
+    # reads数, 总碱基数, Q30, 质量好的reads, 质量好的比例. 转长格式方便比对
+    olddf = pd.read_csv(f'{old_dir}/qc/fastp/fastp.stats.tsv', sep='\t',
+                        usecols=['Sample', 'RawReads', 'RawBases', 'CleanQ20', 'CleanQ30',
+                                 'GC', 'CleanReads', 'CleansBases', 'CleanBaseRate']
+                        ).melt(id_vars='Sample', var_name='Stats', value_name='ValueOld')
+    newdf = pd.read_csv(f'{new_dir}/qc/fastp/fastp.stats.tsv', sep='\t',
+                        usecols=['Sample', 'RawReads', 'RawBases', 'CleanQ20', 'CleanQ30',
+                                 'GC', 'CleanReads', 'CleansBases', 'CleanBaseRate']
+                        ).melt(id_vars='Sample', var_name='Stats', value_name='ValueNew')
+    merged = pd.merge(olddf, newdf, on=['Sample', 'Stats'], how='left')
+    # 删除NTC和POS样本
+    merged = merged[~merged['Sample'].str.contains('NTC|POS', case=False, na=False, regex=True)]
+    merged['Diff'] = merged.apply(lambda row: row['ValueOld'] - row['ValueNew'], axis=1)
+    merged.to_excel(f'{output_dir}/lvis-data-quality.xlsx', index=False)
+    # * 特定标志物
+    res = list(Path(old_dir).glob('anno-qc/*.filter.tsv'))
+    dfs = []
+    for tfile in res:
+        # 跳过POS和NTC样本
+        if re.search(r'POS|NTC', str(tfile), re.IGNORECASE):
+            continue
+        df_old = pd.read_csv(tfile, sep='\t', usecols=['Chrom', 'Start', 'UMIs', 'Depth']
+                             ).head(10).melt(id_vars=['Chrom', 'Start'], var_name='Stats', value_name='ValueOld')
+        df_new = pd.read_csv(str(tfile).replace(old_dir, new_dir), sep='\t',
+                             usecols=['Chrom', 'Start', 'UMIs', 'Depth']
+                             ).head(10).melt(id_vars=['Chrom', 'Start'], var_name='Stats', value_name='ValueNew')
+        merged = pd.merge(df_old, df_new, on=['Chrom', 'Start', 'Stats'], how='left').fillna(0)
+        merged.insert(0, 'Sample', tfile.stem.replace('.filter', ''))
+        merged['Diff'] = merged.apply(lambda row: row['ValueNew'] - row['ValueOld'], axis=1)
+        dfs.append(merged)
+    all_df = pd.concat(dfs, ignore_index=True)
+    all_df.to_excel(f'{output_dir}/lvis.xlsx', index=False)
 
 
 if __name__ == '__main__':
