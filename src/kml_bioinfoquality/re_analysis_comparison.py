@@ -74,11 +74,11 @@ def lvis_comparison(input_file: str, output_dir: Path):
     # reads数, 总碱基数, Q30, 质量好的reads, 质量好的比例. 转长格式方便比对
     olddf = pd.read_csv(f'{old_dir}/qc/fastp/fastp.stats.tsv', sep='\t',
                         usecols=['Sample', 'RawReads', 'RawBases', 'CleanQ20', 'CleanQ30',
-                                 'GC', 'CleanReads', 'CleansBases', 'CleanBaseRate']
+                                 'GC', 'CleanReads', 'CleanBases', 'CleanBaseRate']
                         ).melt(id_vars='Sample', var_name='Stats', value_name='ValueOld')
     newdf = pd.read_csv(f'{new_dir}/qc/fastp/fastp.stats.tsv', sep='\t',
                         usecols=['Sample', 'RawReads', 'RawBases', 'CleanQ20', 'CleanQ30',
-                                 'GC', 'CleanReads', 'CleansBases', 'CleanBaseRate']
+                                 'GC', 'CleanReads', 'CleanBases', 'CleanBaseRate']
                         ).melt(id_vars='Sample', var_name='Stats', value_name='ValueNew')
     merged = pd.merge(olddf, newdf, on=['Sample', 'Stats'], how='left')
     # 删除NTC和POS样本

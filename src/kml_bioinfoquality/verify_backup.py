@@ -58,9 +58,9 @@ def main(input_file, output_file):
                 raise IndexError(f'无法查询本地文件夹大小. \n{local_path}')
             # 判断OBS和本地一致
             if (abs(obs_dire_size - local_dir_size) < 0.1) and (obs_file_num == local_file_num):
-                check = 'PASS'
+                check = 'SAME'
             else:
-                check = 'FAIL'
+                check = 'DIFF'
             results.append([obs_path, local_path, obs_dire_size, local_dir_size, obs_file_num, local_file_num, check])
             logging.info(f'{obs_path} {local_path} {obs_dire_size} {local_dir_size} {obs_file_num} {local_file_num} {check}')
     # 生成Excel
